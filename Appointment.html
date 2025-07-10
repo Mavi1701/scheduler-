@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>£Poundstretcher Open Day Scheduler</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #cc0000;
+      padding: 20px;
+      color: #000;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    .tab-buttons {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .tab-buttons button {
+      background: #fff;
+      border: none;
+      color: #0077cc;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 0 5px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .tab-buttons button.active {
+      background: #0077cc;
+      color: #fff;
+    }
+
+    .tab {
+      display: none;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    .form-container, .search-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input, select, button[type="submit"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button[type="submit"] {
+      background: #0077cc;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .appointments {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .appointment {
+      background: #fafafa;
+      border-left: 5px solid #0077cc;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      position: relative;
+    }
+
+    .appointment span {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .appointment-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    .edit, .delete {
+      background: none;
+      border: none;
+      color: #0077cc;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 14px;
+    }
+
+    .edit:hover, .delete:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>£Poundstretcher Open Day Scheduler 🎄</h1>
+
+  <div class="tab-buttons">
+    <button class="active" onclick="switchTab('formTab', this)">Book Appointment</button>
+    <button onclick="switchTab('bookedTab', this)">Booked Appointments</button>
+  </div>
+
+  <div id="formTab" class="tab active">
+    <div class="form-container">
+      <label for="supplier">Supplier Name:</label>
+      <input type="text" id="supplier" placeholder="e.g., Amazing Gifts Ltd" />
+
+      <label for="buyer">Buyer Name:</label>
+      <input type="text" id="buyer" placeholder="e.g., John from Retail Co" />
+
+      <label for="room">Meeting Room:</label>
+      <select id="room">
+        <option value="">-- Select Room --</option>
+        <option value="Meeting Room 1">Meeting Room 1</option>
+        <option value="Meeting Room 2">Meeting Room 2</option>
+        <option value="Meeting Room 3">Meeting Room 3</option>
+        <option value="Health & Safety Room">Health & Safety Room</option>
+        <option value="Canteen">Canteen</option>
+      </select>
+
+      <label for="time">Appointment Time:</label>
+      <input type="time" id="time" />
+
+      <button type="submit" onclick="bookAppointment()">Book Appointment</button>
+    </div>
+  </div>
+
+  <div id="bookedTab" class="tab">
+    <div class="search-container">
+      <label for="searchBuyer">Search Appointments by Buyer:</label>
+      <input type="text" id="searchBuyer" oninput="searchAppointments()" placeholder="Type buyer name..." />
+    </div>
+    <div class="appointments" id="appointmentList"></div>
+  </div>
+
+  <script>
+    let appointments = [];
+
+    // Load from localStorage on page load
+    window.onload = function () {
+      const savedAppointments = localStorage.getItem("appointments");
+      if (savedAppointments) {
+        appointments = JSON.parse(savedAppointments);
+        updateAppointmentList(appointments);
+      }
+    };
+
+    function saveAppointments() {
+      localStorage.setItem("appointments", JSON.stringify(appointments));
+    }
+
+    function switchTab(tabId, buttonElement) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+
+      document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
+      buttonElement.classList.add('active');
+    }
+
+    function bookAppointment() {
+      const supplier = document.getElementById("supplier").value.trim();
+      const buyer = document.getElementById("buyer").value.trim();
+      const room = document.getElementById("room").value;
+      const time = document.getElementById("time").value;
+
+      if (supplier && buyer && room && time) {
+        appointments.push({ supplier, buyer, room, time });
+        saveAppointments();
+        updateAppointmentList(appointments);
+        clearForm();
+        switchTab('bookedTab', document.querySelectorAll('.tab-buttons button')[1]);
+      } else {
+        alert("Please fill in all fields.");
+      }
+    }
+
+    function updateAppointmentList(list) {
+      const container = document.getElementById("appointmentList");
+      container.innerHTML = "";
+
+      list.sort((a, b) => a.time.localeCompare(b.time));
+
+      list.forEach((a, index) => {
+        const div = document.createElement("div");
+        div.className = "appointment";
+        div.innerHTML = `
+          <span>👔 <strong>Supplier:</strong> ${a.supplier}</span>
+          <span>🧍‍♂️ <strong>Buyer:</strong> ${a.buyer}</span>
+          <span>🏠 <strong>Room:</strong> ${a.room}</span>
+          <span>🕒 <strong>Time:</strong> ${a.time}</span>
+          <div class="appointment-actions">
+            <button class="edit" onclick="editAppointment(${index})">Edit</button>
+            <button class="delete" onclick="deleteAppointment(${index})">Delete</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function clearForm() {
+      document.getElementById("supplier").value = "";
+      document.getElementById("buyer").value = "";
+      document.getElementById("room").value = "";
+      document.getElementById("time").value = "";
+    }
+
+    function editAppointment(index) {
+      const a = appointments[index];
+      document.getElementById("supplier").value = a.supplier;
+      document.getElementById("buyer").value = a.buyer;
+      document.getElementById("room").value = a.room;
+      document.getElementById("time").value = a.time;
+      appointments.splice(index, 1);
+      saveAppointments();
+      updateAppointmentList(appointments);
+      switchTab('formTab', document.querySelectorAll('.tab-buttons button')[0]);
+    }
+
+    function deleteAppointment(index) {
+      appointments.splice(index, 1);
+      saveAppointments();
+      updateAppointmentList(appointments);
+    }
+
+    function searchAppointments() {
+      const query = document.getElementById("searchBuyer").value.toLowerCase();
+      const filtered = appointments.filter(a =>
+        a.buyer.toLowerCase().includes(query)
+      );
+      updateAppointmentList(filtered);
+    }
+  </script>
+
+</body>
+</html>
